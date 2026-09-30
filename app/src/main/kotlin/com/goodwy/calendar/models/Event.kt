@@ -8,6 +8,8 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.goodwy.calendar.extensions.seconds
+import com.goodwy.calendar.extensions.stripEmojis
+import com.goodwy.calendar.extensions.stripLinks
 import com.goodwy.calendar.helpers.CALDAV
 import com.goodwy.calendar.helpers.Config
 import com.goodwy.calendar.helpers.DAY
@@ -271,11 +273,14 @@ data class Event(
         return status == CalendarContract.Events.STATUS_CANCELED
     }
 
-//    fun getDisplayTitle(config: Config): String {
-//        return if (config.stripEmojis) stripEmojis(title) else title
-//    }
-//
-//    fun getDisplayDescription(config: Config): String {
-//        return if (config.stripEmojis) stripEmojis(description) else description
-//    }
-}
+    fun getDisplayTitle(config: Config): String {
+        if (!config.stripEmojis) return title
+        val stripped = title.stripEmojis()
+        return stripped.ifEmpty { "(no title)" }
+    }
+
+    fun getDisplayDescription(config: Config): String {
+        val desc = description.stripLinks()
+        if (!config.stripEmojis) return desc
+        return desc.stripEmojis()
+    }}

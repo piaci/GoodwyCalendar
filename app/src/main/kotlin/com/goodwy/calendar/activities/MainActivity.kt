@@ -7,6 +7,7 @@ import android.graphics.drawable.Icon
 import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.provider.ContactsContract.CommonDataKinds
 import android.provider.ContactsContract.Contacts
 import android.provider.ContactsContract.Data
@@ -66,12 +67,16 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
     private var mStoredHighlightWeekends = false
     private var mStoredStartWeekWithCurrentDay = false
     private var mStoredHighlightWeekendsColor = 0
+    private var mStoredStripEmojis = false
 
     // search results have endless scrolling, so reaching the top/bottom fetches further results
     private var minFetchedSearchTS = 0L
     private var maxFetchedSearchTS = 0L
     private var searchResultEvents = ArrayList<Event>()
     private var bottomItemAtRefresh: ListItem? = null
+
+    private val swipeRefreshTimeoutHandler = Handler(Looper.getMainLooper())
+    private var swipeRefreshTimeout: Runnable? = null
 
     private val binding by viewBinding(ActivityMainBinding::inflate)
 
@@ -164,12 +169,16 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             startActivity(intent)
             return
         }
+
+        getProperPrimaryColor()
+
         val backgroundColor = getProperBackgroundColor()
         if (mStoredTextColor != getProperTextColor() || mStoredBackgroundColor != backgroundColor
             || mStoredPrimaryColor != getProperPrimaryColor() || mStoredDayCode != Formatter.getTodayCode()
             || mStoredDimPastEvents != config.dimPastEvents || mStoredDimCompletedTasks != config.dimCompletedTasks
             || mStoredHighlightWeekends != config.highlightWeekends
             || mStoredHighlightWeekendsColor != config.highlightWeekendsColor
+            || mStoredStripEmojis != config.stripEmojis
         ) {
             updateViewPager()
         }
@@ -226,7 +235,13 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         storeStateVariables()
     }
 
+    override fun onStop() {
+        swipeRefreshTimeout?.let { swipeRefreshTimeoutHandler.removeCallbacks(it) }
+        super.onStop()
+    }
+
     override fun onDestroy() {
+        swipeRefreshTimeout?.let { swipeRefreshTimeoutHandler.removeCallbacks(it) }
         super.onDestroy()
         if (!isChangingConfigurations) {
             EventsDatabase.destroyInstance()
@@ -348,6 +363,7 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             needRestart = false
         }
         mStoredDayCode = Formatter.getTodayCode()
+        mStoredStripEmojis = config.stripEmojis
     }
 
     private fun setupQuickFilter() {
@@ -598,11 +614,19 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
 
     private fun refreshCalDAVCalendars(showRefreshToast: Boolean) {
         showCalDAVRefreshToast = showRefreshToast
-        if (showRefreshToast) {
-            toast(R.string.refreshing)
+        if (showRefreshToast) toast(R.string.refreshing)
+
+        // Guarantee the spinner clears, whether or not the observer fires
+        swipeRefreshTimeout?.let { swipeRefreshTimeoutHandler.removeCallbacks(it) }
+        swipeRefreshTimeout = Runnable {
+            binding.swipeRefreshLayout.isRefreshing = false
+        }.also {
+            swipeRefreshTimeoutHandler.postDelayed(it, 10_000)
         }
+
         updateCalDAVEvents()
         syncCalDAVCalendars {
+            swipeRefreshTimeout?.let { swipeRefreshTimeoutHandler.removeCallbacks(it) }
             calDAVHelper.refreshCalendars(showToasts = true, scheduleNextSync = true) {
                 calDAVChanged()
             }

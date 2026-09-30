@@ -415,7 +415,7 @@ fun Context.notifyEvent(originalEvent: Event) {
         startTime,
         endTime
     )
-    val descriptionOrLocation = if (config.replaceDescription) event.location else event.description
+    val descriptionOrLocation = if (config.replaceDescription) event.location else event.getDisplayDescription(config)
     val content = "$displayedStartDate $timeRange $descriptionOrLocation".trim()
     ensureBackgroundThread {
         if (event.isTask()) eventsHelper.updateIsTaskCompleted(event)
@@ -493,7 +493,7 @@ fun Context.getNotification(
         }
     }
 
-    val contentTitle = if (publicVersion) resources.getString(R.string.app_name_g) else event.title
+    val contentTitle = if (publicVersion) resources.getString(R.string.app_name_g) else event.getDisplayTitle(config)
     val contentText =
         if (publicVersion) resources.getString(R.string.public_event_notification_text) else content
 
@@ -731,7 +731,7 @@ fun Context.addDayEvents(
         } else {
             it.endTS
         }
-    }.thenBy { it.title }).forEach {
+    }.thenBy { it.getDisplayTitle(config) }).forEach {
         val backgroundDrawable = res.getDrawable(R.drawable.day_monthly_event_background)
         backgroundDrawable.applyColorFilter(it.color)
         eventLayoutParams.setMargins(dividerMargin, 0, dividerMargin, dividerMargin)
@@ -749,9 +749,9 @@ fun Context.addDayEvents(
 
             dayMonthlyEventId.apply {
                 setTextColor(textColor)
-                text = it.title.replace(" ", "\u00A0")  // allow word break by char
+                text = it.getDisplayTitle(config).replace(" ", "\u00A0")  // allow word break by char
                 checkViewStrikeThrough(it.shouldStrikeThrough())
-                contentDescription = it.title
+                contentDescription = it.getDisplayTitle(config)
             }
 
             dayMonthlyTaskImage.beVisibleIf(it.isTask())
@@ -783,7 +783,7 @@ fun Context.getEventListItems(
         } else {
             it.endTS
         }
-    }.thenBy { it.title }.thenBy { if (replaceDescription) it.location else it.description })
+    }.thenBy { it.getDisplayTitle(config) }.thenBy { if (replaceDescription) it.location else it.getDisplayDescription(config) })
 
     var prevCode = ""
     var prevMonthLabel = ""
@@ -814,8 +814,8 @@ fun Context.getEventListItems(
                 it.id!!,
                 it.startTS,
                 it.endTS,
-                it.title,
-                it.description,
+                it.getDisplayTitle(config),
+                it.getDisplayDescription(config),
                 it.getIsAllDay(),
                 it.color,
                 it.location,

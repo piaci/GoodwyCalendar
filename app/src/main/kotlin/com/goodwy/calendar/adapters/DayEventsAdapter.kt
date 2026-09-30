@@ -9,6 +9,7 @@ import com.goodwy.calendar.activities.SimpleActivity
 import com.goodwy.calendar.databinding.EventListItemBinding
 import com.goodwy.calendar.dialogs.DeleteEventDialog
 import com.goodwy.calendar.extensions.*
+import com.goodwy.calendar.helpers.Config
 import com.goodwy.calendar.helpers.Formatter
 import com.goodwy.calendar.models.Event
 import com.goodwy.commons.adapters.MyRecyclerViewAdapter
@@ -89,7 +90,7 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
         EventListItemBinding.bind(view).apply {
             eventItemHolder.isSelected = selectedKeys.contains(event.id?.toInt())
 //            eventItemHolder.background.applyColorFilter(textColor)
-            eventItemTitle.text = event.title
+            eventItemTitle.text = event.getDisplayTitle(activity.config)
             eventItemTitle.checkViewStrikeThrough(event.shouldStrikeThrough())
             eventItemTime.text = if (event.getIsAllDay()) allDayString else Formatter.getTimeFromTS(activity, event.startTS)
             if (event.startTS != event.endTS) {
@@ -108,7 +109,7 @@ class DayEventsAdapter(activity: SimpleActivity, val events: ArrayList<Event>, r
                 }
             }
 
-            eventItemDescription.text = if (replaceDescriptionWithLocation) event.location else event.description.replace("\n", " ")
+            eventItemDescription.text = if (replaceDescriptionWithLocation) event.location else event.getDisplayDescription(activity.config).replace("\n", " ")
             eventItemDescription.beVisibleIf(displayDescription && eventItemDescription.text.isNotEmpty())
             eventItemColorBar.background.applyColorFilter(event.color)
 

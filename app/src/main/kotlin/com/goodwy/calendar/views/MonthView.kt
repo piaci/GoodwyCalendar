@@ -149,7 +149,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
 
                     val monthViewEvent = MonthViewEvent(
                         id = event.id!!,
-                        title = event.title,
+                        title = event.getDisplayTitle(config),
                         startTS = event.startTS,
                         endTS = event.endTS,
                         color = event.color,

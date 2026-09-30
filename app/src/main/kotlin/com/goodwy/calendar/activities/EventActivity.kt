@@ -16,6 +16,7 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredName
 import android.provider.ContactsContract.Data
 import android.text.TextUtils
 import android.text.method.LinkMovementMethod
+import android.util.Log
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
@@ -94,7 +95,14 @@ class EventActivity : SimpleActivity() {
 
     private val binding by viewBinding(ActivityEventBinding::inflate)
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(originalSavedState: Bundle?) {
+        val currentIntent = intent
+        val forceFresh = currentIntent?.getBooleanExtra(EXTRA_FORCE_FRESH_FROM_INTENT, false) == true
+        if (forceFresh) {
+            currentIntent?.removeExtra(EXTRA_FORCE_FRESH_FROM_INTENT)
+        }
+        val savedInstanceState = if (forceFresh) null else originalSavedState
+
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
         setupOptionsMenu()
@@ -136,6 +144,13 @@ class EventActivity : SimpleActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        intent.putExtra(EXTRA_FORCE_FRESH_FROM_INTENT, true)
+        setIntent(intent)
+        recreate()
     }
 
     override fun onResume() {
