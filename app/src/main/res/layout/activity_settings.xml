@@ -278,6 +278,17 @@
                             android:layout_marginEnd="@dimen/settings_margin"
                             tools:text="English"/>
                     </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/settings_strip_emojis_holder"
+                        style="@style/SettingsHolderSwitchStyle">
+                        <com.goodwy.commons.views.MyMaterialSwitch
+                            android:id="@+id/settings_strip_emojis"
+                            style="@style/SettingsSwitchStyle"
+                            android:text="@string/strip_emojis"
+                            app:switchPadding="@dimen/bigger_margin"/>
+                    </RelativeLayout>
+
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 

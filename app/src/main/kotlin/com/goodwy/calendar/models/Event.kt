@@ -9,6 +9,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.goodwy.calendar.extensions.seconds
 import com.goodwy.calendar.helpers.CALDAV
+import com.goodwy.calendar.helpers.Config
 import com.goodwy.calendar.helpers.DAY
 import com.goodwy.calendar.helpers.FLAG_ALL_DAY
 import com.goodwy.calendar.helpers.FLAG_IS_IN_PAST
@@ -269,4 +270,12 @@ data class Event(
     fun isEventCanceled(): Boolean {
         return status == CalendarContract.Events.STATUS_CANCELED
     }
+
+//    fun getDisplayTitle(config: Config): String {
+//        return if (config.stripEmojis) stripEmojis(title) else title
+//    }
+//
+//    fun getDisplayDescription(config: Config): String {
+//        return if (config.stripEmojis) stripEmojis(description) else description
+//    }
 }

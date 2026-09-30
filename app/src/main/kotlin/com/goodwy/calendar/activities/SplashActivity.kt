@@ -38,7 +38,8 @@ class SplashActivity : BaseSplashActivity() {
                 }
             }
 
-            else -> startActivity(Intent(this, MainActivity::class.java))
+//            else -> startActivity(Intent(this, MainActivity::class.java))
+            else -> startActivity(Intent(intent).setClass(this, MainActivity::class.java))
         }
         finish()
     }

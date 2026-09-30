@@ -223,46 +223,57 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
                     }
 
                     // mark days with a dot for each event
+//                    if (isMonthDayView && !isDaySelected && !day.isToday && day.dayEvents.isNotEmpty()) {
+//                        val height = dayTextRect.height() * 1.25f
+//                        val eventCount = day.dayEvents.size
+//                        val dotRadius = textPaint.textSize * 0.2f
+//                        val stepSize = dotRadius * 2.5f
+//                        val columnCount = EVENT_DOT_COLUMN_COUNT
+//
+//                        val dayEventsSorted = day.dayEvents
+//                            .asSequence()
+//                            .sortedWith(
+//                                comparator = compareBy({ it.startTS }, { it.endTS }, { it.title })
+//                            )
+//                            .distinctBy { it.color }
+//
+//                        var xDot: Float
+//                        var yDot = yPos + height + textPaint.textSize / 2
+//                        var indexInRow: Int
+//
+//                        val dotCount = dayEventsSorted.count()
+//                        for ((index, event) in dayEventsSorted.withIndex()) {
+//                            indexInRow = index % columnCount
+//                            xDot = xPosCenter + stepSize * (indexInRow - (min(dotCount, columnCount)) / 2)
+//                            if (dotCount % 2 == 0) { // center even number of dots
+//                                xDot += stepSize / 2
+//                            }
+//
+//                            if (index > 0 && indexInRow == 0) { // next row of dots
+//                                yDot += stepSize
+//                            }
+//
+//                            // Always show a + sign if the event count exceeds columnCount.
+//                            if (eventCount - 1 != index && index >= columnCount * EVENT_DOT_ROW_COUNT - 1) {
+//                                plusTextPaint.textSize = stepSize * 1.5f
+//                                canvas.drawText("+", xDot, yDot + dotRadius * 1.2f, plusTextPaint)
+//                                break
+//                            } else {
+//                                val paint = eventDotPaint.apply { color = event.color }
+//                                canvas.drawCircle(xDot, yDot, dotRadius, paint)
+//                            }
+//                        }
+//                    }
+
                     if (isMonthDayView && !isDaySelected && !day.isToday && day.dayEvents.isNotEmpty()) {
                         val height = dayTextRect.height() * 1.25f
-                        val eventCount = day.dayEvents.size
-                        val dotRadius = textPaint.textSize * 0.2f
-                        val stepSize = dotRadius * 2.5f
-                        val columnCount = EVENT_DOT_COLUMN_COUNT
+                        val dotRadius = textPaint.textSize * 0.12f
+                        val xDot = xPosCenter
+//                        val yDot = yPos + height + textPaint.textSize / 2
+                        val yDot = yPos - dotRadius
 
-                        val dayEventsSorted = day.dayEvents
-                            .asSequence()
-                            .sortedWith(
-                                comparator = compareBy({ it.startTS }, { it.endTS }, { it.title })
-                            )
-                            .distinctBy { it.color }
-
-                        var xDot: Float
-                        var yDot = yPos + height + textPaint.textSize / 2
-                        var indexInRow: Int
-
-                        val dotCount = dayEventsSorted.count()
-                        for ((index, event) in dayEventsSorted.withIndex()) {
-                            indexInRow = index % columnCount
-                            xDot = xPosCenter + stepSize * (indexInRow - (min(dotCount, columnCount)) / 2)
-                            if (dotCount % 2 == 0) { // center even number of dots
-                                xDot += stepSize / 2
-                            }
-
-                            if (index > 0 && indexInRow == 0) { // next row of dots
-                                yDot += stepSize
-                            }
-
-                            // Always show a + sign if the event count exceeds columnCount.
-                            if (eventCount - 1 != index && index >= columnCount * EVENT_DOT_ROW_COUNT - 1) {
-                                plusTextPaint.textSize = stepSize * 1.5f
-                                canvas.drawText("+", xDot, yDot + dotRadius * 1.2f, plusTextPaint)
-                                break
-                            } else {
-                                val paint = eventDotPaint.apply { color = event.color }
-                                canvas.drawCircle(xDot, yDot, dotRadius, paint)
-                            }
-                        }
+                        eventDotPaint.color = context.getProperTextColor()
+                        canvas.drawCircle(xDot, yDot, dotRadius, eventDotPaint)
                     }
 
                     if (!isMonthDayView) {  //draw a divider on top

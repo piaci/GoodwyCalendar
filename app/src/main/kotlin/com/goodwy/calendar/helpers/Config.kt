@@ -149,6 +149,10 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(REPLACE_DESCRIPTION, false)
         set(replaceDescription) = prefs.edit { putBoolean(REPLACE_DESCRIPTION, replaceDescription) }
 
+    var stripEmojis: Boolean
+        get() = prefs.getBoolean(STRIP_EMOJIS, false)
+        set(stripEmojis) = prefs.edit { putBoolean(STRIP_EMOJIS, stripEmojis) }
+
     var displayDescription: Boolean
         get() = prefs.getBoolean(DISPLAY_DESCRIPTION, true)
         set(displayDescription) = prefs.edit { putBoolean(DISPLAY_DESCRIPTION, displayDescription) }

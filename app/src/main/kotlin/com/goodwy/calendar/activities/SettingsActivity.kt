@@ -105,6 +105,7 @@ class SettingsActivity : SimpleActivity() {
         setupCustomizeNotifications()
         setupUseEnglish()
         setupLanguage()
+        setupStripEmojis()
         setupManageCalendars()
         setupManageQuickFilterCalendars()
         setupHourFormat()
@@ -419,6 +420,14 @@ class SettingsActivity : SimpleActivity() {
         settingsHourFormatHolder.setOnClickListener {
             settingsHourFormat.toggle()
             config.use24HourFormat = settingsHourFormat.isChecked
+        }
+    }
+
+    private fun setupStripEmojis() = binding.apply {
+        settingsStripEmojis.isChecked = config.stripEmojis
+        settingsStripEmojisHolder.setOnClickListener {
+            settingsStripEmojis.toggle()
+            config.stripEmojis = settingsStripEmojis.isChecked
         }
     }
 
