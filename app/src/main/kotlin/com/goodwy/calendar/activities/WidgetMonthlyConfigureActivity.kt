@@ -208,8 +208,6 @@ class WidgetMonthlyConfigureActivity : SimpleActivity(), MonthlyCalendar {
     }
 
     private fun updateTextColor() {
-//        topNavigationBinding.topLeftArrow.applyColorFilter(mTextColor)
-//        topNavigationBinding.topRightArrow.applyColorFilter(mTextColor)
         binding.configCalendar.topValue.setTextColor(mTextColor)
         binding.configCalendar.topNewEvent.applyColorFilter(mTextColor)
         binding.configTextColor.setFillWithStroke(mTextColor, mTextColor)

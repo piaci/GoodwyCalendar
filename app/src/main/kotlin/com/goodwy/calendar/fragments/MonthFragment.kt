@@ -111,32 +111,6 @@ class MonthFragment : Fragment(), MonthlyCalendar {
     private fun setupButtons() {
         mTextColor = requireContext().getProperTextColor()
 
-        topNavigationBinding.topLeftArrow.apply {
-            applyColorFilter(mTextColor)
-            background = null
-            setOnClickListener {
-                listener?.goLeft()
-            }
-
-            val pointerLeft = requireContext().getDrawable(R.drawable.ic_chevron_left)
-            pointerLeft?.isAutoMirrored = true
-            setImageDrawable(pointerLeft)
-            contentDescription = getString(R.string.accessibility_previous_month)
-        }
-
-        topNavigationBinding.topRightArrow.apply {
-            applyColorFilter(mTextColor)
-            background = null
-            setOnClickListener {
-                listener?.goRight()
-            }
-
-            val pointerRight = requireContext().getDrawable(R.drawable.ic_chevron_right)
-            pointerRight?.isAutoMirrored = true
-            setImageDrawable(pointerRight)
-            contentDescription = getString(R.string.accessibility_next_month)
-        }
-
         topNavigationBinding.topValue.apply {
             setTextColor(requireContext().getProperTextColor())
             setOnClickListener {
@@ -153,15 +127,11 @@ class MonthFragment : Fragment(), MonthlyCalendar {
 
     fun printCurrentView() {
         topNavigationBinding.apply {
-            topLeftArrow.beGone()
-            topRightArrow.beGone()
             topValue.setTextColor(resources.getColor(com.goodwy.commons.R.color.theme_light_text_color))
             binding.monthViewWrapper.togglePrintMode()
 
             requireContext().printBitmap(binding.monthCalendarHolder.getViewBitmap())
 
-            topLeftArrow.beVisible()
-            topRightArrow.beVisible()
             topValue.setTextColor(requireContext().getProperTextColor())
             binding.monthViewWrapper.togglePrintMode()
         }

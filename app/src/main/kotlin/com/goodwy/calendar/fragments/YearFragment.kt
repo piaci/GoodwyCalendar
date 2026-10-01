@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.goodwy.calendar.R
 import com.goodwy.calendar.activities.MainActivity
 import com.goodwy.calendar.databinding.FragmentYearBinding
 import com.goodwy.calendar.databinding.SmallMonthViewHolderBinding
@@ -21,7 +20,6 @@ import com.goodwy.calendar.helpers.YearlyCalendarImpl
 import com.goodwy.calendar.interfaces.NavigationListener
 import com.goodwy.calendar.interfaces.YearlyCalendar
 import com.goodwy.calendar.models.DayYearly
-import com.goodwy.commons.extensions.applyColorFilter
 import com.goodwy.commons.extensions.getProperPrimaryColor
 import com.goodwy.commons.extensions.getProperTextColor
 import com.goodwy.commons.extensions.updateTextColors
@@ -123,30 +121,6 @@ class YearFragment : Fragment(), YearlyCalendar {
 
     @SuppressLint("UseCompatLoadingForDrawables")
     private fun setupButtons() {
-        val textColor = requireContext().getProperTextColor()
-        topNavigationBinding.topLeftArrow.apply {
-            applyColorFilter(textColor)
-            background = null
-            setOnClickListener {
-                listener?.goLeft()
-            }
-
-            val pointerLeft = requireContext().getDrawable(R.drawable.ic_chevron_left)
-            pointerLeft?.isAutoMirrored = true
-            setImageDrawable(pointerLeft)
-        }
-
-        topNavigationBinding.topRightArrow.apply {
-            applyColorFilter(textColor)
-            background = null
-            setOnClickListener {
-                listener?.goRight()
-            }
-
-            val pointerRight = requireContext().getDrawable(R.drawable.ic_chevron_right)
-            pointerRight?.isAutoMirrored = true
-            setImageDrawable(pointerRight)
-        }
 
         topNavigationBinding.topValue.apply {
             setTextColor(requireContext().getProperTextColor())

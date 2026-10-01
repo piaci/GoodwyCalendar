@@ -3,11 +3,13 @@ package com.goodwy.calendar.fragments
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.goodwy.calendar.R
 import com.goodwy.calendar.activities.MainActivity
 import com.goodwy.calendar.activities.SimpleActivity
 import com.goodwy.calendar.adapters.DayEventsAdapter
@@ -47,40 +49,27 @@ class DayFragment : Fragment() {
     private fun setupButtons() {
         mTextColor = requireContext().getProperTextColor()
 
-        topNavigationBinding.topLeftArrow.apply {
-            applyColorFilter(mTextColor)
-            background = null
-            setOnClickListener {
-                mListener?.goLeft()
-            }
-
-            val pointerLeft = requireContext().getDrawable(R.drawable.ic_chevron_left)
-            pointerLeft?.isAutoMirrored = true
-            setImageDrawable(pointerLeft)
-            contentDescription = getString(R.string.accessibility_previous_day)
-        }
-
-        topNavigationBinding.topRightArrow.apply {
-            applyColorFilter(mTextColor)
-            background = null
-            setOnClickListener {
-                mListener?.goRight()
-            }
-
-            val pointerRight = requireContext().getDrawable(R.drawable.ic_chevron_right)
-            pointerRight?.isAutoMirrored = true
-            setImageDrawable(pointerRight)
-            contentDescription = getString(R.string.accessibility_next_day)
-        }
-
         val day = Formatter.getDayTitle(requireContext(), mDayCode)
         topNavigationBinding.topValue.apply {
-            text = day
-            contentDescription = text
+            setTextColor(mTextColor)
+
+            val spannable = SpannableString(day)
+
+            val pipeIndex = day.indexOf('|')
+            if (pipeIndex >= 0) {
+                spannable.setSpan(
+                    ForegroundColorSpan(requireContext().getProperAccentColor()),
+                    pipeIndex,
+                    pipeIndex + 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+
+            text = spannable
+            contentDescription = day
             setOnClickListener {
                 (activity as MainActivity).showGoToDateDialog()
             }
-            setTextColor(context.getProperTextColor())
         }
     }
 
@@ -135,8 +124,6 @@ class DayFragment : Fragment() {
 
     fun printCurrentView() {
         topNavigationBinding.apply {
-            topLeftArrow.beGone()
-            topRightArrow.beGone()
             topValue.setTextColor(resources.getColor(com.goodwy.commons.R.color.theme_light_text_color))
             (binding.dayEvents.adapter as? DayEventsAdapter)?.togglePrintMode()
 
@@ -144,8 +131,6 @@ class DayFragment : Fragment() {
                 requireContext().printBitmap(binding.dayHolder.getViewBitmap())
 
                 Handler().postDelayed({
-                    topLeftArrow.beVisible()
-                    topRightArrow.beVisible()
                     topValue.setTextColor(requireContext().getProperTextColor())
                     (binding.dayEvents.adapter as? DayEventsAdapter)?.togglePrintMode()
                 }, 1000)

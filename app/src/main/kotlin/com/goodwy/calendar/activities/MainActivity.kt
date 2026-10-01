@@ -170,8 +170,6 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             return
         }
 
-        getProperPrimaryColor()
-
         val backgroundColor = getProperBackgroundColor()
         if (mStoredTextColor != getProperTextColor() || mStoredBackgroundColor != backgroundColor
             || mStoredPrimaryColor != getProperPrimaryColor() || mStoredDayCode != Formatter.getTodayCode()

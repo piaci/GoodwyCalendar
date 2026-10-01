@@ -9,7 +9,7 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/top_left_arrow">
+        android:layout_below="@+id/top_value">
 
         <GridLayout
             android:id="@+id/calendar_wrapper"

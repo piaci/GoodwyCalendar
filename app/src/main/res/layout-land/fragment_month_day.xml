@@ -5,7 +5,7 @@
     android:id="@+id/month_day_calendar_holder"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="@dimen/medium_margin">
+    android:paddingTop="0dp">
 
     <com.goodwy.calendar.views.MonthViewWrapper
         android:id="@+id/month_day_view_wrapper"
@@ -28,10 +28,12 @@
             android:id="@+id/month_day_selected_day_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
+            android:layout_centerHorizontal="false"
             android:background="?attr/selectableItemBackground"
-            android:paddingTop="@dimen/normal_margin"
-            android:paddingBottom="@dimen/small_margin"
+            android:paddingTop="0dp"
+            android:paddingStart="@dimen/normal_margin"
+            android:paddingEnd="@dimen/normal_margin"
+            android:paddingBottom="@dimen/medium_margin"
             android:textSize="22sp"
             tools:text="November 19" />
 

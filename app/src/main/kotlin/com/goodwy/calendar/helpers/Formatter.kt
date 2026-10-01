@@ -46,7 +46,7 @@ object Formatter {
         val dateTime = getDateTimeFromCode(dayCode)
         val day = dateTime.toString(DAY_OF_WEEK_PATTERN)
         return if (addDayOfWeek)
-            "$date ($day)"
+            "$date | $day"
         else
             date
     }

@@ -10,7 +10,7 @@
         android:id="@+id/calendar_wrapper"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/top_left_arrow"
+        android:layout_below="@+id/top_value"
         android:columnCount="3"
         android:padding="@dimen/yearly_padding_side"
         android:rowCount="4">
