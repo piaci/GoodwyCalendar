@@ -512,8 +512,8 @@ class WeekFragment : Fragment(), WeeklyCalendar {
             if (context != null && activity != null && isAdded) {
                 val replaceDescription = config.replaceDescription
                 val sorted = events.sortedWith(
-                    compareBy<Event> { it.startTS }.thenBy { it.endTS }.thenBy { it.title }
-                        .thenBy { if (replaceDescription) it.location else it.description }
+                    compareBy<Event> { it.startTS }.thenBy { it.endTS }.thenBy { it.getDisplayTitle(config) }
+                        .thenBy { if (replaceDescription) it.location else it.getDisplayDescription(config) }
                 ).toMutableList() as ArrayList<Event>
 
                 currEvents = sorted
@@ -719,7 +719,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
                                 3
                             }
 
-                            text = event.title
+                            text = event.getDisplayTitle(config)
                             checkViewStrikeThrough(event.shouldStrikeThrough())
                             contentDescription = text
 
@@ -863,7 +863,7 @@ class WeekFragment : Fragment(), WeeklyCalendar {
             weekEventLabel.apply {
                 setTextColor(textColor)
                 maxLines = if (event.isTask()) 1 else 2
-                text = event.title
+                text = event.getDisplayTitle(config)
                 checkViewStrikeThrough(event.shouldStrikeThrough())
                 contentDescription = text
             }
