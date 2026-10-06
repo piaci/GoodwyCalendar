@@ -24,13 +24,12 @@ import org.joda.time.DateTime
 import org.joda.time.Days
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 // used in the Monthly view fragment, 1 view per screen
 class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(context, attrs, defStyle) {
     companion object {
         private const val BG_CORNER_RADIUS = 8f
-        private const val EVENT_DOT_COLUMN_COUNT = 3
-        private const val EVENT_DOT_ROW_COUNT = 1
     }
 
     private var textPaint: Paint
@@ -65,6 +64,11 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     private var dayVerticalOffsets = SparseIntArray()
     private var selectedDayCoords = Point(-1, -1)
 
+    // collapse state
+    private var progress = 0f        // 0f = fully expanded, 1f = fully collapsed
+    private var visibleWeek = 0      // which week row to bring to the top when collapsed
+    private var trackedDayCode: String? = null
+
     constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
     init {
@@ -78,7 +82,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
 
         smallPadding = resources.displayMetrics.density.toInt()
         val normalTextSize = resources.getDimensionPixelSize(com.goodwy.commons.R.dimen.normal_text_size)
-        weekDaysLetterHeight = normalTextSize * 2
+        weekDaysLetterHeight = (normalTextSize * 2.5f).toInt()
 
         textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = textColor
@@ -135,12 +139,10 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             val dayIndexOnMonthView = day.indexOnMonthView
 
             day.dayEvents.forEach { event ->
-                // make sure we properly handle events lasting multiple days and repeating ones
                 val validDayEvent = isDayValid(event, day.code)
                 val lastEvent = allEvents.lastOrNull { it.id == event.id }
                 val notYetAddedOrIsRepeatingEvent = lastEvent == null || lastEvent.endTS <= event.startTS
 
-                // handle overlapping repeating events e.g. an event that lasts 3 days, but repeats every 2 days has a one day overlap
                 val canOverlap = event.endTS - event.startTS > event.repeatInterval
                 val shouldAddEvent = notYetAddedOrIsRepeatingEvent || canOverlap && (lastEvent.startTS < event.startTS)
 
@@ -178,11 +180,19 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         dayVerticalOffsets.clear()
         measureDaySize(canvas)
 
+        addWeekDayLetters(canvas)
+
+        val topRow = (progress * visibleWeek).roundToInt()
+        val translation = topRow * dayHeight
+        canvas.save()
+        val clipTop = weekDaysLetterHeight - resources.displayMetrics.density * 4f
+        canvas.clipRect(0f, clipTop, canvas.width.toFloat(), canvas.height.toFloat())
+        canvas.translate(0f, -translation)
+
         if (config.showGrid && !isMonthDayView) {
             drawGrid(canvas)
         }
 
-        addWeekDayLetters(canvas)
         if (showWeekNumbers && days.isNotEmpty()) {
             addWeekNumbers(canvas)
         }
@@ -198,9 +208,11 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
                     dayVerticalOffsets.put(day.indexOnMonthView, dayVerticalOffsets[day.indexOnMonthView] + weekDaysLetterHeight)
                     val verticalOffset = dayVerticalOffsets[day.indexOnMonthView]
                     val xPos = x * dayWidth + horizontalOffset
-                    val yPos = y * dayHeight + verticalOffset * 1.15f
+                    val yPos = y * dayHeight + verticalOffset
                     val textY = yPos + textPaint.textSize
                     val xPosCenter = xPos + dayWidth / 2
+
+                    val isTrackedDay = !isPrintVersion && trackedDayCode != null && day.code == trackedDayCode
 
                     val isDaySelected = selectedDayCoords.x != -1 && x == selectedDayCoords.x && y == selectedDayCoords.y
                     if (isDaySelected) {
@@ -222,61 +234,19 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
                         )
                     }
 
-                    // mark days with a dot for each event
-//                    if (isMonthDayView && !isDaySelected && !day.isToday && day.dayEvents.isNotEmpty()) {
-//                        val height = dayTextRect.height() * 1.25f
-//                        val eventCount = day.dayEvents.size
-//                        val dotRadius = textPaint.textSize * 0.2f
-//                        val stepSize = dotRadius * 2.5f
-//                        val columnCount = EVENT_DOT_COLUMN_COUNT
-//
-//                        val dayEventsSorted = day.dayEvents
-//                            .asSequence()
-//                            .sortedWith(
-//                                comparator = compareBy({ it.startTS }, { it.endTS }, { it.title })
-//                            )
-//                            .distinctBy { it.color }
-//
-//                        var xDot: Float
-//                        var yDot = yPos + height + textPaint.textSize / 2
-//                        var indexInRow: Int
-//
-//                        val dotCount = dayEventsSorted.count()
-//                        for ((index, event) in dayEventsSorted.withIndex()) {
-//                            indexInRow = index % columnCount
-//                            xDot = xPosCenter + stepSize * (indexInRow - (min(dotCount, columnCount)) / 2)
-//                            if (dotCount % 2 == 0) { // center even number of dots
-//                                xDot += stepSize / 2
-//                            }
-//
-//                            if (index > 0 && indexInRow == 0) { // next row of dots
-//                                yDot += stepSize
-//                            }
-//
-//                            // Always show a + sign if the event count exceeds columnCount.
-//                            if (eventCount - 1 != index && index >= columnCount * EVENT_DOT_ROW_COUNT - 1) {
-//                                plusTextPaint.textSize = stepSize * 1.5f
-//                                canvas.drawText("+", xDot, yDot + dotRadius * 1.2f, plusTextPaint)
-//                                break
-//                            } else {
-//                                val paint = eventDotPaint.apply { color = event.color }
-//                                canvas.drawCircle(xDot, yDot, dotRadius, paint)
-//                            }
-//                        }
-//                    }
-
-                    if (isMonthDayView && !isDaySelected && !day.isToday && day.dayEvents.isNotEmpty()) {
-                        val height = dayTextRect.height() * 1.25f
-                        val dotRadius = textPaint.textSize * 0.12f
-                        val xDot = xPosCenter
-//                        val yDot = yPos + height + textPaint.textSize / 2
-                        val yDot = yPos - dotRadius
-
-                        eventDotPaint.color = context.getProperTextColor()
-                        canvas.drawCircle(xDot, yDot, dotRadius, eventDotPaint)
+                    if (isMonthDayView && !isDaySelected && !day.isToday) {
+                        if (isTrackedDay) {
+                            val dotRadius = textPaint.textSize * 0.20f
+                            eventDotPaint.color = primaryColor
+                            canvas.drawCircle(xPosCenter, yPos - dotRadius, dotRadius, eventDotPaint)
+                        } else if (day.dayEvents.isNotEmpty()) {
+                            val dotRadius = textPaint.textSize * 0.12f
+                            eventDotPaint.color = context.getProperTextColor()
+                            canvas.drawCircle(xPosCenter, yPos - dotRadius, dotRadius, eventDotPaint)
+                        }
                     }
 
-                    if (!isMonthDayView) {  //draw a divider on top
+                    if (!isMonthDayView) {  // draw a divider on top
                         val paint = getColoredPaint(resources.getColor(com.goodwy.commons.R.color.divider_grey, null))
                         paint.strokeWidth = 1F
                         canvas.drawLine(xPos, yPos - 12, xPos + dayWidth, yPos - 12, paint)
@@ -294,6 +264,8 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
                 drawEvent(event, canvas)
             }
         }
+
+        canvas.restore()
     }
 
     private fun drawGrid(canvas: Canvas) {
@@ -306,7 +278,6 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             canvas.drawLine(lineX, 0f, lineX, canvas.height.toFloat(), gridPaint)
         }
 
-        // horizontal lines
         canvas.drawLine(0f, 0f, canvas.width.toFloat(), 0f, gridPaint)
         for (i in 0 until ROW_COUNT) {
             canvas.drawLine(0f, i * dayHeight + weekDaysLetterHeight, canvas.width.toFloat(), i * dayHeight + weekDaysLetterHeight, gridPaint)
@@ -329,17 +300,14 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
 
     private fun addWeekNumbers(canvas: Canvas) {
         val weekNumberPaint = Paint(textPaint)
-
         for (i in 0 until ROW_COUNT) {
             val weekDays = days.subList(i * 7, i * 7 + 7)
             weekNumberPaint.color = if (weekDays.any { it.isToday && !isPrintVersion }) primaryColor else textColor
-
-            // fourth day of the week determines the week of the year number
             val weekOfYear = days.getOrNull(i * 7 + 3)?.weekOfYear ?: 1
             val id = "$weekOfYear:"
             val horizontalMarginFactor = 0.5f
             val xPos = horizontalOffset * horizontalMarginFactor
-            val yPos = i * dayHeight + weekDaysLetterHeight * 1.14f
+            val yPos = i * dayHeight + weekDaysLetterHeight
             canvas.drawText(id, xPos, yPos + textPaint.textSize, weekNumberPaint)
         }
     }
@@ -352,12 +320,14 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     }
 
     private fun drawEvent(event: MonthViewEvent, canvas: Canvas) {
+        val eventWeek = event.startDayIndex / COLUMN_COUNT
+
         var verticalOffset = 0
         for (i in 0 until min(event.daysCnt, 7 - event.startDayIndex % 7)) {
             verticalOffset = max(verticalOffset, dayVerticalOffsets[event.startDayIndex + i])
         }
         val xPos = event.startDayIndex % 7 * dayWidth + horizontalOffset
-        val yPos = (event.startDayIndex / 7) * dayHeight
+        val yPos = eventWeek * dayHeight
         val xPosCenter = xPos + dayWidth / 2
 
         if (verticalOffset - eventTitleHeight * 2 > dayHeight) {
@@ -367,7 +337,6 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             return
         }
 
-        // event background rectangle
         val backgroundY = yPos + verticalOffset
         val bgLeft = xPos + smallPadding
         val bgTop = backgroundY + smallPadding - eventTitleHeight
@@ -410,6 +379,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     private fun getTextPaint(startDay: DayMonthly): Paint {
         var paintColor = when {
             !isPrintVersion && startDay.isToday -> primaryColor.getContrastColor()
+            !isPrintVersion && trackedDayCode != null && startDay.code == trackedDayCode -> primaryColor
             highlightWeekends && startDay.isWeekend -> weekendsTextColor
             else -> textColor
         }
@@ -484,7 +454,6 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         currDayOfWeek = context.getProperDayIndexInWeek(DateTime())
     }
 
-    // take into account cases when an event starts on the previous screen, subtract those days
     private fun getEventLastingDaysCount(event: Event): Int {
         val startDateTime = Formatter.getDateTimeFromTS(event.startTS)
         val endDateTime = Formatter.getDateTimeFromTS(event.endTS)
@@ -524,6 +493,24 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
 
     fun updateCurrentlySelectedDay(x: Int, y: Int) {
         selectedDayCoords = Point(x, y)
+        invalidate()
+    }
+
+    fun setCollapseState(newProgress: Float, newVisibleWeek: Int) {
+        if (progress == newProgress && visibleWeek == newVisibleWeek) return
+        progress = newProgress
+        visibleWeek = newVisibleWeek
+        invalidate()
+    }
+
+    fun getWeekIndexForDayCode(dayCode: String): Int {
+        val day = days.firstOrNull { it.code == dayCode } ?: return 0
+        return day.indexOnMonthView / COLUMN_COUNT
+    }
+
+    fun setTrackedDayCode(code: String?) {
+        if (trackedDayCode == code) return
+        trackedDayCode = code
         invalidate()
     }
 }

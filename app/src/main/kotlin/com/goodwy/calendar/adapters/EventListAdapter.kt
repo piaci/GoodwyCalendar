@@ -309,4 +309,13 @@ class EventListAdapter(
             }
         }
     }
+
+    fun getDayCodeAtPosition(position: Int): String? {
+        val item = listItems[position] ?: return null
+        return when (item) {
+            is ListEvent -> Formatter.getDayCodeFromTS(item.startTS)
+            is ListSectionDay -> item.code
+            else -> null
+        }
+    }
 }
