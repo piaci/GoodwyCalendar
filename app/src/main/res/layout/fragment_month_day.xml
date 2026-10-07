@@ -53,6 +53,8 @@
             android:clipToPadding="false"
             android:layoutAnimation="@anim/layout_animation"
             android:scrollbars="vertical"
+            android:scrollbarThumbVertical="@drawable/scrollbar_thumb"
+            android:scrollbarSize="2dp"
             app:layoutManager="com.goodwy.commons.views.MyLinearLayoutManager" />
     </RelativeLayout>
 

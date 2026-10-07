@@ -96,6 +96,7 @@
                 android:layout_marginBottom="@dimen/activity_margin"
                 android:contentDescription="@string/new_event"
                 android:src="@drawable/ic_plus_vector"
+                app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"
                 app:backgroundTint="@color/color_primary"
                 app:layout_constraintBottom_toTopOf="@+id/quick_calendar_filter"
                 app:layout_constraintEnd_toEndOf="parent"

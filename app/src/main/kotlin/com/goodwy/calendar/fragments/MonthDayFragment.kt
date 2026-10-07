@@ -2,10 +2,14 @@ package com.goodwy.calendar.fragments
 
 import android.content.Context
 import android.content.res.Resources
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.graphics.drawable.DrawableCompat
+import androidx.core.view.doOnLayout
+import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -26,7 +30,10 @@ import com.goodwy.calendar.models.Event
 import com.goodwy.calendar.models.ListEvent
 import com.goodwy.commons.extensions.areSystemAnimationsEnabled
 import com.goodwy.commons.extensions.beVisibleIf
+import com.goodwy.commons.extensions.getProperAccentColor
+import com.goodwy.commons.extensions.getProperPrimaryColor
 import com.goodwy.commons.extensions.getProperTextColor
+import com.goodwy.commons.extensions.getProperTextCursorColor
 import com.goodwy.commons.interfaces.RefreshRecyclerViewListener
 import org.joda.time.DateTime
 
@@ -117,6 +124,14 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
             }
         })
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            binding.monthDayEventsList.doOnPreDraw {
+                binding.monthDayEventsList.verticalScrollbarThumbDrawable?.mutate()?.let {
+                    DrawableCompat.setTint(it, requireContext().getProperPrimaryColor())
+                }
+            }
+        }
+
         return binding.root
     }
 
@@ -134,6 +149,14 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
         mCalendar!!.apply {
             mTargetDate = Formatter.getDateTimeFromCode(mDayCode)
             getDays(false)    // prefill the screen asap, even if without events
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            binding.monthDayEventsList.doOnPreDraw {
+                binding.monthDayEventsList.verticalScrollbarThumbDrawable?.mutate()?.let {
+                    DrawableCompat.setTint(it, requireContext().getProperPrimaryColor())
+                }
+            }
         }
 
         storeStateVariables()
@@ -284,5 +307,6 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
 
         accumulatedScroll = if (accumulatedScroll > 0f) collapseDeadZonePx else -collapseDeadZonePx
     }
+
 
 }
