@@ -180,6 +180,9 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         dayVerticalOffsets.clear()
         measureDaySize(canvas)
 
+        val dayNumberConsumed = weekDaysLetterHeight + textPaint.textSize * 2 + 30
+        val cellFitsBar = dayHeight >= (dayNumberConsumed - eventTitleHeight * 2)
+
         addWeekDayLetters(canvas)
 
         val topRow = (progress * visibleWeek).roundToInt()
@@ -189,7 +192,9 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
         canvas.clipRect(0f, clipTop, canvas.width.toFloat(), canvas.height.toFloat())
         canvas.translate(0f, -translation)
 
-        if (config.showGrid && !isMonthDayView) {
+        val showBarStyle = !isMonthDayView || cellFitsBar
+
+        if (config.showGrid && showBarStyle) {
             drawGrid(canvas)
         }
 
@@ -213,28 +218,16 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
                     val xPosCenter = xPos + dayWidth / 2
 
                     val isTrackedDay = !isPrintVersion && trackedDayCode != null && day.code == trackedDayCode
-
                     val isDaySelected = selectedDayCoords.x != -1 && x == selectedDayCoords.x && y == selectedDayCoords.y
+
                     if (isDaySelected) {
-                        canvas.drawCircle(
-                            xPosCenter,
-                            textY - dayTextRect.height() / 2,
-                            textPaint.textSize * 0.8f,
-                            circleStrokePaint
-                        )
-                        if (day.isToday) {
-                            textPaint.color = textColor
-                        }
+                        canvas.drawCircle(xPosCenter, textY - dayTextRect.height() / 2, textPaint.textSize * 0.8f, circleStrokePaint)
+                        if (day.isToday) textPaint.color = textColor
                     } else if (day.isToday && !isPrintVersion) {
-                        canvas.drawCircle(
-                            xPosCenter,
-                            textY - dayTextRect.height() / 2,
-                            textPaint.textSize * 0.8f,
-                            getCirclePaint(day)
-                        )
+                        canvas.drawCircle(xPosCenter, textY - dayTextRect.height() / 2, textPaint.textSize * 0.8f, getCirclePaint(day))
                     }
 
-                    if (isMonthDayView && !isDaySelected && !day.isToday) {
+                    if (isMonthDayView && !cellFitsBar && !isDaySelected && !day.isToday) {
                         if (isTrackedDay) {
                             val dotRadius = textPaint.textSize * 0.20f
                             eventDotPaint.color = primaryColor
@@ -246,7 +239,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
                         }
                     }
 
-                    if (!isMonthDayView) {  // draw a divider on top
+                    if (showBarStyle && !config.showGrid) {
                         val paint = getColoredPaint(resources.getColor(com.goodwy.commons.R.color.divider_grey, null))
                         paint.strokeWidth = 1F
                         canvas.drawLine(xPos, yPos - 12, xPos + dayWidth, yPos - 12, paint)
@@ -259,7 +252,7 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
             }
         }
 
-        if (!isMonthDayView) {
+        if (showBarStyle) {
             for (event in allEvents) {
                 drawEvent(event, canvas)
             }
@@ -315,8 +308,9 @@ class MonthView(context: Context, attrs: AttributeSet, defStyle: Int) : View(con
     private fun measureDaySize(canvas: Canvas) {
         dayWidth = (canvas.width - horizontalOffset) / 7f
         dayHeight = (canvas.height - weekDaysLetterHeight) / ROW_COUNT.toFloat()
-        val availableHeightForEvents = dayHeight.toInt() - weekDaysLetterHeight
-        maxEventsPerDay = availableHeightForEvents / eventTitleHeight
+        val dayNumberConsumed = weekDaysLetterHeight + textPaint.textSize * 2 + 30
+        val availableHeightForEvents = dayHeight.toInt() - dayNumberConsumed
+//        maxEventsPerDay = (availableHeightForEvents / eventTitleHeight).toInt()
     }
 
     private fun drawEvent(event: MonthViewEvent, canvas: Canvas) {

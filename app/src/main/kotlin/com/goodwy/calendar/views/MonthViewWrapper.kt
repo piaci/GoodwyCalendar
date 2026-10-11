@@ -21,6 +21,7 @@ import com.goodwy.commons.compose.extensions.getActivity
 import com.goodwy.commons.dialogs.RadioGroupIconDialog
 import com.goodwy.commons.extensions.onGlobalLayout
 import com.goodwy.commons.models.RadioItem
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class MonthViewWrapper(context: Context, attrs: AttributeSet, defStyle: Int) : FrameLayout(context, attrs, defStyle) {
@@ -46,6 +47,13 @@ class MonthViewWrapper(context: Context, attrs: AttributeSet, defStyle: Int) : F
 
     var onVisibleHeightChanged: ((Int) -> Unit)? = null
 
+    private var availableHeight = 0
+    private var fullScreenProgress = 0f
+    private var lastCumulativePull = 0f
+
+    private var fullScreenSettleAnimator: ValueAnimator? = null
+    private val fullScreenVelocityThreshold = 800f  // px/s; tune after trying
+
     constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
     init {
@@ -70,28 +78,34 @@ class MonthViewWrapper(context: Context, attrs: AttributeSet, defStyle: Int) : F
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
-        val availableHeight = MeasureSpec.getSize(heightMeasureSpec)
+        availableHeight = MeasureSpec.getSize(heightMeasureSpec)
 
         horizontalOffset = context.getWeekNumberWidth()
         dayWidth = (width - horizontalOffset) / COLUMN_COUNT.toFloat()
 
+        // Baseline (progress-independent) sizes
         if (!collapseEnabled) {
-            dayHeight = (availableHeight - weekDaysLetterHeight) / ROW_COUNT.toFloat()
             expandedHeight = availableHeight
-            oneWeekHeight = (weekDaysLetterHeight + dayHeight).toInt()
+            oneWeekHeight = availableHeight
         } else {
             val targetExpandedHeight = (availableHeight * expandedHeightFraction).toInt()
-            dayHeight = ((targetExpandedHeight - weekDaysLetterHeight) / ROW_COUNT.toFloat())
+            var baseDayHeight = ((targetExpandedHeight - weekDaysLetterHeight) / ROW_COUNT.toFloat())
                 .coerceAtLeast(1f)
             val minDayHeight = resources.getDimensionPixelSize(com.goodwy.commons.R.dimen.normal_text_size) * 2.5f
-            dayHeight = dayHeight.coerceAtLeast(minDayHeight)
-            expandedHeight = (weekDaysLetterHeight + ROW_COUNT * dayHeight).toInt()
-            oneWeekHeight = (weekDaysLetterHeight + dayHeight).toInt()
+            baseDayHeight = baseDayHeight.coerceAtLeast(minDayHeight)
+            expandedHeight = (weekDaysLetterHeight + ROW_COUNT * baseDayHeight).toInt()
+            oneWeekHeight = (weekDaysLetterHeight + baseDayHeight).toInt()
         }
+
+        val currentHeight = if (!collapseEnabled) availableHeight
+        else (expandedHeight + fullScreenProgress * (availableHeight - expandedHeight)).toInt()
+
+        val currentDayHeight = ((currentHeight - weekDaysLetterHeight) / ROW_COUNT.toFloat())
+            .coerceAtLeast(1f)
 
         binding.monthView.measure(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-            MeasureSpec.makeMeasureSpec(expandedHeight, MeasureSpec.EXACTLY)
+            MeasureSpec.makeMeasureSpec(currentHeight, MeasureSpec.EXACTLY)
         )
 
         var dayIndex = 0
@@ -100,23 +114,26 @@ class MonthViewWrapper(context: Context, attrs: AttributeSet, defStyle: Int) : F
             if (child === binding.monthView) continue
             child.measure(
                 MeasureSpec.makeMeasureSpec(dayWidth.toInt(), MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(dayHeight.toInt(), MeasureSpec.EXACTLY)
+                MeasureSpec.makeMeasureSpec(currentDayHeight.toInt(), MeasureSpec.EXACTLY)
             )
             dayIndex++
         }
-
-        setMeasuredDimension(width, expandedHeight)
+        setMeasuredDimension(width, currentHeight)
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         val width = right - left
-        if (dayHeight <= 0f) return
+        val currentHeight = bottom - top
+        if (currentHeight <= 0) return
 
-        binding.monthView.layout(0, 0, width, expandedHeight)
+        val currentDayHeight = ((currentHeight - weekDaysLetterHeight) / ROW_COUNT.toFloat())
+            .coerceAtLeast(1f)
+
+        binding.monthView.layout(0, 0, width, currentHeight)
         binding.monthView.setCollapseState(progress, visibleWeek)
 
         val topRow = (progress * visibleWeek).roundToInt()
-        val translation = topRow * dayHeight
+        val translation = topRow * currentDayHeight
 
         var dayIndex = 0
         for (i in 0 until childCount) {
@@ -126,12 +143,11 @@ class MonthViewWrapper(context: Context, attrs: AttributeSet, defStyle: Int) : F
             val col = dayIndex % COLUMN_COUNT
             child.visibility = VISIBLE
             val childLeft = (col * dayWidth + horizontalOffset).toInt()
-            val childTop = (row * dayHeight + weekDaysLetterHeight).toInt()
+            val childTop = (row * currentDayHeight + weekDaysLetterHeight).toInt()
             child.layout(
-                childLeft,
-                childTop,
+                childLeft, childTop,
                 (childLeft + dayWidth).toInt(),
-                (childTop + dayHeight).toInt()
+                (childTop + currentDayHeight).toInt()
             )
             child.translationY = -translation
             dayIndex++
@@ -177,9 +193,9 @@ class MonthViewWrapper(context: Context, attrs: AttributeSet, defStyle: Int) : F
 
     private fun addViewBackground(viewX: Int, viewY: Int, day: DayMonthly) {
         MonthViewBackgroundBinding.inflate(inflater, this, false).root.apply {
-            if (isMonthDayView) {
-                background = null
-            }
+//            if (isMonthDayView) {
+//                background = null
+//            }
             contentDescription = "${day.value} ${
                 Formatter.getMonthName(
                     context,
@@ -224,7 +240,8 @@ class MonthViewWrapper(context: Context, attrs: AttributeSet, defStyle: Int) : F
 
     fun getVisibleMonthHeight(): Int {
         if (!collapseEnabled) return expandedHeight
-        return (oneWeekHeight + (1 - progress) * (expandedHeight - oneWeekHeight)).toInt()
+        val collapseHeight = (oneWeekHeight + (1 - progress) * (expandedHeight - oneWeekHeight)).toInt()
+        return (collapseHeight + fullScreenProgress * (availableHeight - expandedHeight)).toInt()
     }
 
     fun setCollapseProgress(newProgress: Float) {
@@ -285,8 +302,12 @@ class MonthViewWrapper(context: Context, attrs: AttributeSet, defStyle: Int) : F
     }
 
     private fun updateChildTranslations() {
+        val currentHeight = measuredHeight
+        if (currentHeight <= 0) return
+        val currentDayHeight = ((currentHeight - weekDaysLetterHeight) / ROW_COUNT.toFloat())
+            .coerceAtLeast(1f)
         val topRow = (progress * visibleWeek).roundToInt()
-        val translation = topRow * dayHeight
+        val translation = topRow * currentDayHeight
         for (i in 0 until childCount) {
             val child = getChildAt(i)
             if (child === binding.monthView) continue
@@ -298,6 +319,59 @@ class MonthViewWrapper(context: Context, attrs: AttributeSet, defStyle: Int) : F
 
     fun setTrackedDayCode(code: String?) {
         binding.monthView.setTrackedDayCode(code)
+    }
+
+    fun isFullScreen(): Boolean = fullScreenProgress >= 1f
+
+    fun getFullScreenProgress(): Float = fullScreenProgress
+
+    fun getFullScreenDistance(): Int = (availableHeight - expandedHeight).coerceAtLeast(1)
+
+    fun setFullScreenProgress(newProgress: Float) {
+        val clamped = newProgress.coerceIn(0f, 1f)
+        if (fullScreenProgress == clamped) return
+        fullScreenProgress = clamped
+        requestLayout()
+        (parent as? View)?.invalidate()
+        invalidate()
+    }
+
+    fun onFullScreenPull(cumulativeDy: Float) {
+        fullScreenSettleAnimator?.cancel()
+        fullScreenSettleAnimator = null
+        val delta = cumulativeDy - lastCumulativePull
+        lastCumulativePull = cumulativeDy
+        val distance = getFullScreenDistance().toFloat()
+        if (distance <= 0f) return
+        setFullScreenProgress(fullScreenProgress + delta / distance)
+    }
+
+    fun onFullScreenRelease(velocityY: Float) {
+        lastCumulativePull = 0f
+        val target = if (abs(velocityY) < fullScreenVelocityThreshold) {
+            if (fullScreenProgress > 0.5f) 1f else 0f
+        } else {
+            if (velocityY > 0f) 1f else 0f  // downward = expand, upward = contract
+        }
+        snapFullScreenTo(target)
+    }
+
+    fun snapFullScreenTo(targetProgress: Float) {
+        val target = targetProgress.coerceIn(0f, 1f)
+        fullScreenSettleAnimator?.cancel()
+        fullScreenSettleAnimator = null
+        if (fullScreenProgress == target) return
+        fullScreenSettleAnimator = ValueAnimator.ofFloat(fullScreenProgress, target).apply {
+            duration = 220L
+            interpolator = DecelerateInterpolator()
+            addUpdateListener {
+                fullScreenProgress = it.animatedValue as Float
+                requestLayout()
+                (parent as? View)?.invalidate()
+                invalidate()
+            }
+            start()
+        }
     }
 
 }

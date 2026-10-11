@@ -454,17 +454,6 @@
                     </RelativeLayout>
 
                     <RelativeLayout
-                        android:id="@+id/settings_caldav_pull_to_refresh_holder"
-                        style="@style/SettingsHolderSwitchStyle">
-
-                        <com.goodwy.commons.views.MyMaterialSwitch
-                            android:id="@+id/settings_caldav_pull_to_refresh"
-                            style="@style/SettingsSwitchStyle"
-                            android:text="@string/enable_pull_to_refresh"
-                            app:switchPadding="@dimen/bigger_margin"/>
-                    </RelativeLayout>
-
-                    <RelativeLayout
                         android:id="@+id/settings_manage_synced_calendars_holder"
                         style="@style/SettingsHolderStyle">
 

@@ -212,10 +212,6 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getInt(DEFAULT_REMINDER_3, REMINDER_OFF)
         set(defaultReminder3) = prefs.edit { putInt(DEFAULT_REMINDER_3, defaultReminder3) }
 
-    var pullToRefresh: Boolean
-        get() = prefs.getBoolean(PULL_TO_REFRESH, false)
-        set(pullToRefresh) = prefs.edit { putBoolean(PULL_TO_REFRESH, pullToRefresh) }
-
     var lastVibrateOnReminder: Boolean
         get() = prefs.getBoolean(LAST_VIBRATE_ON_REMINDER, context.config.vibrateOnReminder)
         set(lastVibrateOnReminder) = prefs.edit { putBoolean(LAST_VIBRATE_ON_REMINDER, lastVibrateOnReminder) }

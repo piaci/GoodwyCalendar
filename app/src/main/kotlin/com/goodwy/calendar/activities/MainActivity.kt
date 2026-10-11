@@ -132,10 +132,6 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             refreshCalDAVCalendars(false)
         }
 
-        binding.swipeRefreshLayout.setOnRefreshListener {
-            refreshCalDAVCalendars(true)
-        }
-
         checkIsViewIntent()
 
         if (!checkIsOpenIntent() && savedInstanceState == null) {
@@ -212,7 +208,6 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             fabTaskIcon.background.applyColorFilter(mStoredPrimaryColor)
 
             searchHolder.background = backgroundColor.toDrawable()
-            checkSwipeRefreshAvailability()
             checkShortcuts()
 
             if (!mainMenu.isSearchOpen) {
@@ -320,8 +315,6 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             closeSearch()
             true
         } else {
-            binding.swipeRefreshLayout.isRefreshing = false
-            checkSwipeRefreshAvailability()
             when {
                 binding.fabExtendedOverlay.isVisible() -> {
                     hideExtendedFab()
@@ -614,17 +607,8 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         showCalDAVRefreshToast = showRefreshToast
         if (showRefreshToast) toast(R.string.refreshing)
 
-        // Guarantee the spinner clears, whether or not the observer fires
-        swipeRefreshTimeout?.let { swipeRefreshTimeoutHandler.removeCallbacks(it) }
-        swipeRefreshTimeout = Runnable {
-            binding.swipeRefreshLayout.isRefreshing = false
-        }.also {
-            swipeRefreshTimeoutHandler.postDelayed(it, 10_000)
-        }
-
         updateCalDAVEvents()
         syncCalDAVCalendars {
-            swipeRefreshTimeout?.let { swipeRefreshTimeoutHandler.removeCallbacks(it) }
             calDAVHelper.refreshCalendars(showToasts = true, scheduleNextSync = true) {
                 calDAVChanged()
             }
@@ -635,9 +619,6 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         refreshViewPager()
         if (showCalDAVRefreshToast) {
             toast(R.string.refreshing_complete)
-        }
-        runOnUiThread {
-            binding.swipeRefreshLayout.isRefreshing = false
         }
     }
 
@@ -1048,7 +1029,6 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
         binding.calendarFab.beVisibleIf(view != YEARLY_VIEW && view != WEEKLY_VIEW)
         val dateCode = getDateCodeToDisplay(view)
         config.storedView = view
-        checkSwipeRefreshAvailability()
         updateViewPager(dateCode)
         if (goToTodayButton?.isVisible == true) {
             shouldGoToTodayBeVisible = false
@@ -1469,14 +1449,6 @@ class MainActivity : SimpleActivity(), RefreshRecyclerViewListener {
             }
 
             showSearchResultEvents(searchResultEvents, UPDATE_BOTTOM)
-        }
-    }
-
-    private fun checkSwipeRefreshAvailability() {
-        binding.swipeRefreshLayout.isEnabled =
-            config.caldavSync && config.pullToRefresh && config.storedView != WEEKLY_VIEW
-        if (!binding.swipeRefreshLayout.isEnabled) {
-            binding.swipeRefreshLayout.isRefreshing = false
         }
     }
 

@@ -7,9 +7,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.R
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.doOnLayout
 import androidx.core.view.doOnPreDraw
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -40,7 +42,6 @@ import org.joda.time.DateTime
 class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListener {
     private var mShowWeekNumbers = false
     private var mDayCode = ""
-    private var mSelectedDayCode = ""
     private var mPackageName = ""
     private var mLastHash = 0L
     private var mCalendar: MonthlyCalendarImpl? = null
@@ -127,9 +128,31 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             binding.monthDayEventsList.doOnPreDraw {
                 binding.monthDayEventsList.verticalScrollbarThumbDrawable?.mutate()?.let {
-                    DrawableCompat.setTint(it, requireContext().getProperPrimaryColor())
+                    DrawableCompat.setTint(it, requireContext().getProperPrimaryColor()) }
+            }
+        }
+
+        binding.monthDayViewWrapper.onVisibleHeightChanged = { visibleHeight ->
+            binding.monthDayListHolder.translationY = visibleHeight.toFloat()
+            binding.monthDayEventsList.updatePadding(
+                top = binding.monthDayEventsList.paddingTop,
+                bottom = visibleHeight + resources.getDimensionPixelSize(com.goodwy.commons.R.dimen.normal_margin
+                )
+            )
+        }
+
+        binding.monthDayGestureLayout!!.apply {
+            canIntercept = { dy ->
+                val wrapper = binding.monthDayViewWrapper
+                when {
+                    wrapper.isFullScreen() -> dy < 0f
+                    wrapper.getCollapseProgress() <= 0f ->
+                        dy > 0f && !binding.monthDayEventsList.canScrollVertically(-1)
+                    else -> false
                 }
             }
+            onPull = { dy -> binding.monthDayViewWrapper.onFullScreenPull(dy) }
+            onRelease = { v -> binding.monthDayViewWrapper.onFullScreenRelease(v) }
         }
 
         return binding.root
@@ -183,8 +206,7 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
 
         activity?.runOnUiThread {
             binding.monthDayViewWrapper.updateDays(days, false) {
-                mSelectedDayCode = it.code
-                updateVisibleEvents()
+                (activity as MainActivity).openDayFromMonthly(Formatter.getDateTimeFromCode(it.code))
             }
         }
 
@@ -196,23 +218,16 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
             return
         }
 
+        if (activity == null) return
+
+        val shownMonthDateTime = Formatter.getDateTimeFromCode(mDayCode)
         val filtered = mListEvents.filter {
-            if (mSelectedDayCode.isEmpty()) {
-                val shownMonthDateTime = Formatter.getDateTimeFromCode(mDayCode)
-                val startDateTime = Formatter.getDateTimeFromTS(it.startTS)
-                shownMonthDateTime.year == startDateTime.year && shownMonthDateTime.monthOfYear == startDateTime.monthOfYear
-            } else {
-                val selectionDate = Formatter.getDateTimeFromCode(mSelectedDayCode).toLocalDate()
-                val startDate = Formatter.getDateFromTS(it.startTS)
-                val endDate = Formatter.getDateFromTS(it.endTS)
-                selectionDate in startDate..endDate
-            }
+            val startDateTime = Formatter.getDateTimeFromTS(it.startTS)
+            shownMonthDateTime.year == startDateTime.year &&
+                shownMonthDateTime.monthOfYear == startDateTime.monthOfYear
         }
 
-        val listItems = requireActivity().getEventListItems(filtered, mSelectedDayCode.isEmpty(), false)
-        if (mSelectedDayCode.isNotEmpty()) {
-            binding.monthDaySelectedDayLabel.text = Formatter.getDateFromCode(requireActivity(), mSelectedDayCode, false)
-        }
+        val listItems = requireActivity().getEventListItems(filtered, true, false)
 
         activity?.runOnUiThread {
             if (activity != null) {
@@ -250,7 +265,7 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
 
     fun printCurrentView() {}
 
-    fun getNewEventDayCode() = mSelectedDayCode.ifEmpty { null }
+    fun getNewEventDayCode(): String? = null
 
     private fun getMonthLabel(shownMonthDateTime: DateTime): String {
         var month = Formatter.getMonthName(requireActivity(), shownMonthDateTime.monthOfYear)

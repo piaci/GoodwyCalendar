@@ -23,20 +23,13 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <com.goodwy.calendar.helpers.SmartSwipeRefreshLayout
-                android:id="@+id/swipe_refresh_layout"
+            <FrameLayout
+                android:id="@+id/fragments_holder"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 app:layout_constraintBottom_toTopOf="@+id/quick_calendar_filter"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <FrameLayout
-                    android:id="@+id/fragments_holder"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:paddingHorizontal="@dimen/small_margin" />
-
-            </com.goodwy.calendar.helpers.SmartSwipeRefreshLayout>
+                app:layout_constraintTop_toTopOf="parent"
+                android:paddingHorizontal="@dimen/small_margin" />
 
             <RelativeLayout
                 android:id="@+id/fab_extended_overlay"

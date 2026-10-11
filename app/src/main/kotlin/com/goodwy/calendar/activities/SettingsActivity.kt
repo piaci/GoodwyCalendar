@@ -133,7 +133,6 @@ class SettingsActivity : SimpleActivity() {
         setupDefaultStartTime()
         setupDefaultDuration()
         setupDefaultCalendar()
-        setupPullToRefresh()
         setupDefaultReminder()
         setupDefaultReminder1()
         setupDefaultReminder2()
@@ -462,15 +461,6 @@ class SettingsActivity : SimpleActivity() {
         }
     }
 
-    private fun setupPullToRefresh() = binding.apply {
-        settingsCaldavPullToRefreshHolder.beVisibleIf(config.caldavSync)
-        settingsCaldavPullToRefresh.isChecked = config.pullToRefresh
-        settingsCaldavPullToRefreshHolder.setOnClickListener {
-            settingsCaldavPullToRefresh.toggle()
-            config.pullToRefresh = settingsCaldavPullToRefresh.isChecked
-        }
-    }
-
     private fun setupManageSyncedCalendars() = binding.apply {
         settingsManageSyncedCalendarsHolder.beVisibleIf(config.caldavSync)
         settingsManageSyncedCalendarsHolder.setOnClickListener {
@@ -485,7 +475,6 @@ class SettingsActivity : SimpleActivity() {
             settingsCaldavSync.isChecked = false
             config.caldavSync = false
             settingsManageSyncedCalendarsHolder.beGone()
-            settingsCaldavPullToRefreshHolder.beGone()
 
             ensureBackgroundThread {
                 config.getSyncedCalendarIdsAsList().forEach {
@@ -507,7 +496,6 @@ class SettingsActivity : SimpleActivity() {
             }
 
             settingsManageSyncedCalendarsHolder.beVisibleIf(newCalendarIds.isNotEmpty())
-            settingsCaldavPullToRefreshHolder.beVisibleIf(newCalendarIds.isNotEmpty())
             settingsCaldavSync.isChecked = newCalendarIds.isNotEmpty()
             config.caldavSync = newCalendarIds.isNotEmpty()
             if (settingsCaldavSync.isChecked) {
@@ -1257,7 +1245,6 @@ class SettingsActivity : SimpleActivity() {
                 put(DEFAULT_REMINDER_1, config.defaultReminder1)
                 put(DEFAULT_REMINDER_2, config.defaultReminder2)
                 put(DEFAULT_REMINDER_3, config.defaultReminder3)
-                put(PULL_TO_REFRESH, config.pullToRefresh)
                 put(DEFAULT_START_TIME, config.defaultStartTime)
                 put(DEFAULT_DURATION, config.defaultDuration)
                 put(USE_SAME_SNOOZE, config.useSameSnooze)
@@ -1372,7 +1359,6 @@ class SettingsActivity : SimpleActivity() {
                 DEFAULT_REMINDER_1 -> config.defaultReminder1 = value.toInt()
                 DEFAULT_REMINDER_2 -> config.defaultReminder2 = value.toInt()
                 DEFAULT_REMINDER_3 -> config.defaultReminder3 = value.toInt()
-                PULL_TO_REFRESH -> config.pullToRefresh = value.toBoolean()
                 DEFAULT_START_TIME -> config.defaultStartTime = value.toInt()
                 DEFAULT_DURATION -> config.defaultDuration = value.toInt()
                 USE_SAME_SNOOZE -> config.useSameSnooze = value.toBoolean()

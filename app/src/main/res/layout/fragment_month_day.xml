@@ -21,48 +21,54 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="November 19" />
 
-    <RelativeLayout
-        android:id="@+id/month_day_list_holder"
+    <com.goodwy.calendar.views.FullscreenPullLayout
+        android:id="@+id/month_day_gesture_layout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:paddingTop="@dimen/medium_margin"
         app:layout_constraintTop_toBottomOf="@+id/month_day_selected_day_label"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <com.goodwy.commons.views.MyTextView
-            android:id="@+id/month_day_no_events_placeholder"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            android:alpha="0.8"
-            android:gravity="center"
-            android:paddingStart="@dimen/activity_margin"
-            android:paddingEnd="@dimen/activity_margin"
-            android:text="@string/no_items_found"
-            android:textSize="@dimen/bigger_text_size"
-            android:textStyle="italic"
-            android:visibility="gone" />
-
-        <com.goodwy.commons.views.MyRecyclerView
-            android:id="@+id/month_day_events_list"
+        <RelativeLayout
+            android:id="@+id/month_day_list_holder"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_alignParentTop="true"
-            android:clipToPadding="false"
-            android:layoutAnimation="@anim/layout_animation"
-            android:scrollbars="vertical"
-            android:scrollbarThumbVertical="@drawable/scrollbar_thumb"
-            android:scrollbarSize="2dp"
-            app:layoutManager="com.goodwy.commons.views.MyLinearLayoutManager" />
-    </RelativeLayout>
+            android:paddingTop="@dimen/medium_margin">
 
-    <com.goodwy.calendar.views.MonthViewWrapper
-        android:id="@+id/month_day_view_wrapper"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/month_day_selected_day_label"
-        app:layout_constraintStart_toStartOf="parent" />
+            <com.goodwy.commons.views.MyTextView
+                android:id="@+id/month_day_no_events_placeholder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:alpha="0.8"
+                android:gravity="center"
+                android:paddingStart="@dimen/activity_margin"
+                android:paddingEnd="@dimen/activity_margin"
+                android:text="@string/no_items_found"
+                android:textSize="@dimen/bigger_text_size"
+                android:textStyle="italic"
+                android:visibility="gone" />
+
+            <com.goodwy.commons.views.MyRecyclerView
+                android:id="@+id/month_day_events_list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignParentTop="true"
+                android:clipToPadding="false"
+                android:layoutAnimation="@anim/layout_animation"
+                android:scrollbars="vertical"
+                android:scrollbarThumbVertical="@drawable/scrollbar_thumb"
+                android:scrollbarSize="2dp"
+                app:layoutManager="com.goodwy.commons.views.MyLinearLayoutManager" />
+        </RelativeLayout>
+
+        <com.goodwy.calendar.views.MonthViewWrapper
+            android:id="@+id/month_day_view_wrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top" />
+
+    </com.goodwy.calendar.views.FullscreenPullLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
