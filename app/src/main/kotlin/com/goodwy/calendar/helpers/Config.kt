@@ -342,4 +342,8 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(SHOW_WIDGET_NAME, true)
         set(showWidgetName) = prefs.edit { putBoolean(SHOW_WIDGET_NAME, showWidgetName) }
 
+    var monthDayFullScreen: Boolean
+        get() = prefs.getBoolean("month_day_full_screen", false)
+        set(v) = prefs.edit { putBoolean("month_day_full_screen", v) }
+
 }
