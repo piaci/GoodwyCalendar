@@ -63,6 +63,10 @@ class MonthDayFragmentsHolder : MyFragmentHolder(), NavigationListener {
 
                 override fun onPageSelected(position: Int) {
                     currentDayCode = codes[position]
+
+                    val adapter = viewPager.adapter as? MyMonthDayPagerAdapter
+                    adapter?.getFragment(position)?.applyFullScreenFromConfig()
+
                     val shouldGoToTodayBeVisible = shouldGoToTodayBeVisible()
                     if (isGoToTodayVisible != shouldGoToTodayBeVisible) {
                         (activity as? MainActivity)?.toggleGoToTodayVisibility(shouldGoToTodayBeVisible)

@@ -155,6 +155,12 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
             onRelease = { v -> binding.monthDayViewWrapper.onFullScreenRelease(v) }
         }
 
+        binding.monthDayViewWrapper.onFullScreenSettled = { isFull ->
+            requireContext().config.monthDayFullScreen = isFull
+        }
+
+        applyFullScreenFromConfig()
+
         return binding.root
     }
 
@@ -184,6 +190,7 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
 
         storeStateVariables()
         updateCalendar()
+        applyFullScreenFromConfig()
     }
 
     private fun storeStateVariables() {
@@ -323,5 +330,8 @@ class MonthDayFragment : Fragment(), MonthlyCalendar, RefreshRecyclerViewListene
         accumulatedScroll = if (accumulatedScroll > 0f) collapseDeadZonePx else -collapseDeadZonePx
     }
 
-
+    fun applyFullScreenFromConfig() {
+        val full = requireContext().config.monthDayFullScreen
+        binding.monthDayViewWrapper.setFullScreenProgress(if (full) 1f else 0f)
+    }
 }

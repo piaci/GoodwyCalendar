@@ -51,4 +51,6 @@ class MyMonthDayPagerAdapter(fm: FragmentManager, private val mCodes: List<Strin
     }
 
     fun getNewEventDayCode(pos: Int): String? = mFragments[pos].getNewEventDayCode()
+
+    fun getFragment(position: Int): MonthDayFragment? = mFragments[position]
 }

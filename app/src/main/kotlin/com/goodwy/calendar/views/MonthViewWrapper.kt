@@ -54,6 +54,8 @@ class MonthViewWrapper(context: Context, attrs: AttributeSet, defStyle: Int) : F
     private var fullScreenSettleAnimator: ValueAnimator? = null
     private val fullScreenVelocityThreshold = 800f  // px/s; tune after trying
 
+    var onFullScreenSettled: ((Boolean) -> Unit)? = null
+
     constructor(context: Context, attrs: AttributeSet) : this(context, attrs, 0)
 
     init {
@@ -370,6 +372,11 @@ class MonthViewWrapper(context: Context, attrs: AttributeSet, defStyle: Int) : F
                 (parent as? View)?.invalidate()
                 invalidate()
             }
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    onFullScreenSettled?.invoke(fullScreenProgress >= 1f)
+                }
+            })
             start()
         }
     }
